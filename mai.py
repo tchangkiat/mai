@@ -16,14 +16,18 @@ def main(args=None):
 
     main_window = tk.Tk() 
     main_window.title("Mai")
-    output_text_box = tk.Text(main_window, height = 30, width = 100)
-    output_text_box.pack()
-    input_text_box = tk.Text(main_window, height = 15, width = 100)
-    input_text_box.pack()
-    button = tk.Button(main_window, text='Send', width=25, command=main_window.destroy) 
+    output_text = tk.Text(main_window, height = 30, width = 100)
+    output_text.pack()
+    input_text = tk.Text(main_window, height = 15, width = 100)
+    input_text.pack()
+    button = tk.Button(main_window, text='Send', width=25, command=lambda:send(input_text, output_text)) 
     button.pack()
-    main_window.mainloop() 
+    main_window.mainloop()
 
+def send(input_text, output_text):
+    input = input_text.get("1.0", "end-1c")
+    output_text.insert(tk.END, "[You] " + input + "\n")
+    input_text.delete('1.0', tk.END)
 
 ########################################################################################
 
