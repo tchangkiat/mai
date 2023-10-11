@@ -1,5 +1,6 @@
 import os
 import sys
+
 import tkinter as tk
 import tkinter.scrolledtext as tkst
 
@@ -7,7 +8,9 @@ from langchain.chains import ConversationChain
 from langchain.llms.bedrock import Bedrock
 from langchain.memory import ConversationBufferMemory
 
-from utils import bedrock
+from utils import bedrock, polly
+
+from pygame import mixer
 
 class Gui(tk.Frame):
     def __init__(self, *args, **kwargs):
@@ -17,7 +20,6 @@ class Gui(tk.Frame):
         os.environ["AWS_PROFILE"] = "default"
 
         boto3_bedrock = bedrock.get_bedrock_client(
-            assumed_role=os.environ.get("BEDROCK_ASSUME_ROLE", None),
             region=os.environ.get("AWS_DEFAULT_REGION", None)
         )
 
@@ -30,6 +32,11 @@ class Gui(tk.Frame):
         self.conversation = ConversationChain(
             llm=cl_llm, verbose=True, memory=memory
         )
+
+        self.polly_client = polly.get_polly_client(
+            region=os.environ.get("AWS_DEFAULT_REGION", None)
+        )
+        mixer.init()
 
         # Output Text
         self.output_text = tkst.ScrolledText(self, height = 30, width = 125)
@@ -50,6 +57,20 @@ class Gui(tk.Frame):
             self.output_text.insert(tk.END, "[Mai] " + ai_response + "\n\n")
             self.output_text.config(state=tk.DISABLED)
             self.output_text.see("end")
+            # self.synthesize(ai_response)
+    
+    def synthesize(self, text):
+        response = self.polly_client.synthesize_speech(VoiceId='Joanna',
+            OutputFormat='mp3', 
+            Text = text,
+            Engine = 'neural')
+
+        file = open('response.mp3', 'wb')
+        file.write(response['AudioStream'].read())
+        file.close()
+
+        mixer.music.load("response.mp3")
+        mixer.music.play()
 
 if __name__ == '__main__':
     # Clear the console screen
