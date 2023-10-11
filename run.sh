@@ -18,5 +18,5 @@ fi
 echo "Activating virtual environment"
 source $SCRIPTPATH/activate
 
-echo "Running mai.py"
-python mai.py
+echo "Running main.py"
+python main.py

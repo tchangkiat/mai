@@ -1,3 +1,5 @@
+echo Activating virtual environment
 mai-env\Scripts\activate
 
-python mai.py
+echo Running main.py
+python main.py
