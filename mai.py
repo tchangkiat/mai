@@ -1,6 +1,7 @@
 import os
 import sys
 import tkinter as tk
+import tkinter.scrolledtext as tkst
 
 from langchain.chains import ConversationChain
 from langchain.llms.bedrock import Bedrock
@@ -36,20 +37,30 @@ def main(args=None):
     # Create GUI
     main_window = tk.Tk() 
     main_window.title("Mai")
-    output_text = tk.Text(main_window, height = 30, width = 100)
-    output_text.pack()
-    input_text = tk.Text(main_window, height = 15, width = 100)
-    input_text.pack()
-    button = tk.Button(main_window, text='Send', width=25, command=lambda:send(input_text, output_text, conversation)) 
-    button.pack()
+    
+    # Output Text
+    output_text = tkst.ScrolledText(main_window, height = 30, width = 125)
+    output_text.config(state=tk.DISABLED)
+
+    # Input Text
+    output_text.grid(row=0, column=0, columnspan=5)
+    input_text = tkst.ScrolledText(main_window, height = 15, width = 100)
+    input_text.grid(row=1, column=0)
+
+    # Send Button
+    button = tk.Button(main_window, text='Send', width=10, height=3, command=lambda:send(input_text, output_text, conversation)) 
+    button.grid(row=1, column=4)
+
     main_window.mainloop()
 
 def send(input_text, output_text, conversation):
     input = input_text.get("1.0", "end-1c")
     if input:
-        ai_response = conversation.predict(input=input)
+        #ai_response = conversation.predict(input=input)
+        output_text.config(state=tk.NORMAL)
         output_text.insert(tk.END, "[You] " + input + "\n\n")
-        output_text.insert(tk.END, "[AI] " + ai_response + "\n\n")
+        #output_text.insert(tk.END, "[AI] " + ai_response + "\n\n")
+        output_text.config(state=tk.DISABLED)
         input_text.delete('1.0', tk.END)
         output_text.see("end")
 
