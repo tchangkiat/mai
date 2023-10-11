@@ -4,6 +4,7 @@ import sys
 import tkinter as tk
 import tkinter.scrolledtext as tkst
 
+from langchain import PromptTemplate
 from langchain.chains import ConversationChain
 from langchain.llms.bedrock import Bedrock
 from langchain.memory import ConversationBufferMemory
@@ -31,10 +32,30 @@ class Gui(tk.Frame):
             client=boto3_bedrock,
             model_kwargs={"max_tokens_to_sample": 350},
         )
-        memory = ConversationBufferMemory()
         self.conversation = ConversationChain(
-            llm=cl_llm, verbose=True, memory=memory
+            llm=cl_llm, verbose=False, memory=ConversationBufferMemory()
         )
+
+        claude_prompt = PromptTemplate.from_template("""
+        Human: The following is a friendly conversation between a human and an AI.
+        The AI is talkative and provides lots of specific details from its context. If the AI does not know
+        the answer to a question, it truthfully says it does not know.
+        Your name is Mai.
+
+        Current conversation:
+        <conversation_history>
+        {history}
+        </conversation_history>
+
+        Here is the human's next reply:
+        <human_reply>
+        {input}
+        </human_reply>
+
+        Assistant:
+        """)
+
+        self.conversation.prompt = claude_prompt
 
         # Set up client for Amazon Polly
         self.polly_client = polly.get_polly_client(
