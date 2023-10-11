@@ -16,13 +16,16 @@ class Gui(tk.Frame):
     def __init__(self, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
         
+        # Used for setting up clients for Amazon services
         os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
         os.environ["AWS_PROFILE"] = "default"
 
+        # Set up client for Amazon Bedrock
         boto3_bedrock = bedrock.get_bedrock_client(
             region=os.environ.get("AWS_DEFAULT_REGION", None)
         )
 
+        # Create conversation chain using LangChain for Large Language Model (LLM) in Amazon Bedrock
         cl_llm = Bedrock(
             model_id="anthropic.claude-v2",
             client=boto3_bedrock,
@@ -33,9 +36,12 @@ class Gui(tk.Frame):
             llm=cl_llm, verbose=True, memory=memory
         )
 
+        # Set up client for Amazon Polly
         self.polly_client = polly.get_polly_client(
             region=os.environ.get("AWS_DEFAULT_REGION", None)
         )
+
+        # Initialize dependency to play sound
         mixer.init()
 
         # Output Text
@@ -48,9 +54,12 @@ class Gui(tk.Frame):
         self.input_text.grid(row=1, column=0)
 
     def send(self, event=None):
+        # Insert input in the output text box and clear input in its text box
         input = self.input_text.get("1.0", tk.END)
         self.input_text.delete("1.0", tk.END)
+
         if input:
+            # Run prediction using the LLM and insert the response in the output text box
             ai_response = self.conversation.predict(input=input)
             self.output_text.config(state=tk.NORMAL)
             self.output_text.insert(tk.END, "[You] " + input)
