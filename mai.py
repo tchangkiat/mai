@@ -24,7 +24,7 @@ class Gui(tk.Frame):
         cl_llm = Bedrock(
             model_id="anthropic.claude-v2",
             client=boto3_bedrock,
-            model_kwargs={"max_tokens_to_sample": 300},
+            model_kwargs={"max_tokens_to_sample": 350},
         )
         memory = ConversationBufferMemory()
         self.conversation = ConversationChain(
@@ -34,25 +34,21 @@ class Gui(tk.Frame):
         # Output Text
         self.output_text = tkst.ScrolledText(self, height = 30, width = 125)
         self.output_text.config(state=tk.DISABLED)
-        self.output_text.grid(row=0, column=0, columnspan=5)
+        self.output_text.grid(row=0, column=0)
 
         # Input Text
-        self.input_text = tkst.ScrolledText(self, height = 15, width = 100)
+        self.input_text = tk.Text(self, height = 1, width = 100)
         self.input_text.grid(row=1, column=0)
 
-        # Send Button
-        button = tk.Button(self, text='Send', width=10, height=3, command=lambda:self.send()) 
-        button.grid(row=1, column=4)
-
-    def send(self):
+    def send(self, event=None):
         input = self.input_text.get("1.0", tk.END)
+        self.input_text.delete("1.0", tk.END)
         if input:
             ai_response = self.conversation.predict(input=input)
             self.output_text.config(state=tk.NORMAL)
-            self.output_text.insert(tk.END, "[You] " + input + "\n\n")
-            self.output_text.insert(tk.END, "[AI] " + ai_response + "\n\n")
+            self.output_text.insert(tk.END, "[You] " + input)
+            self.output_text.insert(tk.END, "[Mai] " + ai_response + "\n\n")
             self.output_text.config(state=tk.DISABLED)
-            self.input_text.delete('1.0', tk.END)
             self.output_text.see("end")
 
 if __name__ == '__main__':
@@ -65,5 +61,6 @@ if __name__ == '__main__':
     root = tk.Tk() 
     root.title("Mai")
     frame = Gui(root)
+    root.bind('<Return>', frame.send)
     frame.pack(fill="both", expand=True)
     root.mainloop()
