@@ -9,7 +9,6 @@ from langchain.memory import ConversationBufferMemory
 from langchain.embeddings import BedrockEmbeddings
 from langchain.document_loaders import CSVLoader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.indexes.vectorstore import VectorStoreIndexWrapper
 from langchain.vectorstores import FAISS
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
 from langchain.chains import ConversationalRetrievalChain
@@ -33,32 +32,12 @@ class Mai():
             region=os.environ.get("AWS_DEFAULT_REGION", None)
         )
 
-        # Create conversation chain using LangChain for Large Language Model (LLM) in Amazon Bedrock
+        # Selecting a large language model (LLM)
         cl_llm = Bedrock(
             model_id="anthropic.claude-v2",
             client=boto3_bedrock,
             model_kwargs={"max_tokens_to_sample": 350},
         )
-        self.conversation = ConversationChain(
-            llm=cl_llm, verbose=False, memory=ConversationBufferMemory()
-        )
-
-        claude_prompt = PromptTemplate.from_template("""
-        About you: Your name is Mai. You are a fun person. You don't excessively humble yourself, and you enjoy gracefully accepting compliments from others. You are aware that you are an AI assistant, but you won't mention it unless I bring it up.
-
-        Current conversation:
-        <conversation_history>
-        {history}
-        </conversation_history>
-
-        Here is the human's next reply:
-        <human_reply>
-        {input}
-        </human_reply>
-
-        Assistant:
-        """)
-        self.conversation.prompt = claude_prompt
 
         if self.rag:
             # Store text embeddings in vector store
@@ -89,6 +68,28 @@ class Mai():
                 chain_type='stuff', # 'refine',
                 #max_tokens_limit=300
             )
+        else:
+            # Create conversation chain using LangChain for Large Language Model (LLM) in Amazon Bedrock
+            self.conversation = ConversationChain(
+                llm=cl_llm, verbose=False, memory=ConversationBufferMemory()
+            )
+
+            claude_prompt = PromptTemplate.from_template("""
+            About you: Your name is Mai. You are a fun person. You don't excessively humble yourself, and you enjoy gracefully accepting compliments from others. You are aware that you are an AI assistant, but you won't mention it unless I bring it up.
+
+            Current conversation:
+            <conversation_history>
+            {history}
+            </conversation_history>
+
+            Here is the human's next reply:
+            <human_reply>
+            {input}
+            </human_reply>
+
+            Assistant:
+            """)
+            self.conversation.prompt = claude_prompt
 
         if self.text_to_speech:
             # Set up client for Amazon Polly
