@@ -17,11 +17,22 @@ Assistant:
 """
 CONVERSATION = PromptTemplate.from_template(conversation_template)
 
-rag_template = """
-Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
+condense_prompt = """{chat_history}
 
-Chat History:
-{chat_history}
-Follow Up Input: {question}
-Standalone question:"""
-RAG = PromptTemplate.from_template(rag_template)
+Answer only with the new question.
+
+Human: How would you ask the question considering the previous conversation: {question}
+
+Assistant: Question:"""
+CONDENSE_PROMPT = PromptTemplate.from_template(condense_prompt)
+
+llm_chain_prompt = """
+{context}
+
+Human: Your name is Mai. Use at maximum 3 sentences to answer the question: {question}
+
+If the answer is not in the context say "Sorry, I don't know as the answer was not found in the context"
+
+Assistant:"""
+
+LLM_CHAIN_PROMPT = PromptTemplate.from_template(llm_chain_prompt)

@@ -11,6 +11,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
+from langchain.schema import BaseMessage
 
 from utils import bedrock, polly, prompts
 
@@ -34,7 +35,7 @@ class Mai():
         cl_llm = Bedrock(
             model_id="anthropic.claude-v2",
             client=boto3_bedrock,
-            model_kwargs={"max_tokens_to_sample": 350},
+            model_kwargs={"max_tokens_to_sample": 500},
         )
 
         if self.rag:
@@ -56,16 +57,40 @@ class Mai():
 
             print(f"vectorstore_faiss_aws: number of elements in the index={vectorstore_faiss_aws.index.ntotal}::")
 
+            # We are also providing a different chat history retriever which outputs the history as a Claude chat (ie including the \n\n)
+            _ROLE_MAP = {"human": "\n\nHuman: ", "ai": "\n\nAssistant: "}
+            def _get_chat_history(chat_history):
+                buffer = ""
+                for dialogue_turn in chat_history:
+                    if isinstance(dialogue_turn, BaseMessage):
+                        role_prefix = _ROLE_MAP.get(dialogue_turn.type, f"{dialogue_turn.type}: ")
+                        buffer += f"\n{role_prefix}{dialogue_turn.content}"
+                    elif isinstance(dialogue_turn, tuple):
+                        human = "\n\nHuman: " + dialogue_turn[0]
+                        ai = "\n\nAssistant: " + dialogue_turn[1]
+                        buffer += "\n" + "\n".join([human, ai])
+                    else:
+                        raise ValueError(
+                            f"Unsupported chat history format: {type(dialogue_turn)}."
+                            f" Full chat history: {chat_history} "
+                        )
+                return buffer
+
             memory_chain = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
             self.retrieval_chain = ConversationalRetrievalChain.from_llm(
                 llm=cl_llm, 
                 retriever=vectorstore_faiss_aws.as_retriever(), 
+                #retriever=vectorstore_faiss_aws.as_retriever(search_type='similarity', search_kwargs={"k": 8}),
                 memory=memory_chain,
-                condense_question_prompt=prompts.RAG,
+                get_chat_history=_get_chat_history,
                 #verbose=True,
-                chain_type='stuff',
+                condense_question_prompt=prompts.CONDENSE_PROMPT, 
+                chain_type='stuff', # 'refine',
                 #max_tokens_limit=300
             )
+
+            # the LLMChain prompt to get the answer. the ConversationalRetrievalChange does not expose this parameter in the constructor
+            self.retrieval_chain.combine_docs_chain.llm_chain.prompt = prompts.LLM_CHAIN_PROMPT
         else:
             # Create conversation chain using LangChain for Large Language Model (LLM) in Amazon Bedrock
             self.conversation = ConversationChain(
