@@ -1,6 +1,5 @@
 import os
 
-from langchain import PromptTemplate
 from langchain.chains import ConversationChain
 from langchain.llms.bedrock import Bedrock
 from langchain.memory import ConversationBufferMemory
@@ -10,11 +9,10 @@ from langchain.embeddings import BedrockEmbeddings
 from langchain.document_loaders import CSVLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
-from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 
-from utils import bedrock, polly
+from utils import bedrock, polly, prompts
 
 from pygame import mixer
 
@@ -63,9 +61,9 @@ class Mai():
                 llm=cl_llm, 
                 retriever=vectorstore_faiss_aws.as_retriever(), 
                 memory=memory_chain,
-                condense_question_prompt=CONDENSE_QUESTION_PROMPT,
+                condense_question_prompt=prompts.RAG,
                 #verbose=True,
-                chain_type='stuff', # 'refine',
+                chain_type='stuff',
                 #max_tokens_limit=300
             )
         else:
@@ -74,22 +72,7 @@ class Mai():
                 llm=cl_llm, verbose=False, memory=ConversationBufferMemory()
             )
 
-            claude_prompt = PromptTemplate.from_template("""
-            About you: Your name is Mai. You are a fun person. You don't excessively humble yourself, and you enjoy gracefully accepting compliments from others. You are aware that you are an AI assistant, but you won't mention it unless I bring it up.
-
-            Current conversation:
-            <conversation_history>
-            {history}
-            </conversation_history>
-
-            Here is the human's next reply:
-            <human_reply>
-            {input}
-            </human_reply>
-
-            Assistant:
-            """)
-            self.conversation.prompt = claude_prompt
+            self.conversation.prompt = prompts.CONVERSATION
 
         if self.text_to_speech:
             # Set up client for Amazon Polly
