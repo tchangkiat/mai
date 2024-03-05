@@ -17,11 +17,11 @@ Install the following dependencies (if not done yet):
 3. Run the following commands to set up.
 
    - MacOS: `sh setup.sh`
-   - Windows: `.\setup.bat`
+   - Windows: `.\setup.ps1`
 
 ## Usage
 
 1. Run the following command.
 
    - MacOS: `sh run.sh`
-   - Windows: `.\run.bat`
+   - Windows: `.\run.ps1`
