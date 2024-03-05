@@ -1,4 +1,5 @@
 """Helper utilities for working with Amazon Polly"""
+
 # Python Built-Ins:
 import os
 from typing import Optional
@@ -20,7 +21,9 @@ def get_polly_client(
         If not specified, AWS_REGION or AWS_DEFAULT_REGION environment variable will be used.
     """
     if region is None:
-        target_region = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION"))
+        target_region = os.environ.get(
+            "AWS_REGION", os.environ.get("AWS_DEFAULT_REGION")
+        )
     else:
         target_region = region
 
@@ -43,9 +46,7 @@ def get_polly_client(
     session = boto3.Session(**session_kwargs)
 
     polly_client = session.client(
-        service_name='polly',
-        config=retry_config,
-        **client_kwargs
+        service_name="polly", config=retry_config, **client_kwargs
     )
 
     print("boto3 Polly client successfully created!")
