@@ -109,7 +109,9 @@ class Mai:
         else:
             # Create conversation chain using LangChain for Large Language Model (LLM) in Amazon Bedrock
             self.conversation = ConversationChain(
-                llm=cl_llm, verbose=False, memory=ConversationBufferMemory()
+                llm=cl_llm,
+                verbose=False,
+                memory=ConversationBufferMemory(ai_prefix="Assistant"),
             )
 
             self.conversation.prompt = prompts.CONVERSATION
