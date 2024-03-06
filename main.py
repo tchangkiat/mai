@@ -1,4 +1,5 @@
 from mai import Mai
+from utils.colors import purple
 
 if __name__ == "__main__":
     mai = Mai()
@@ -10,5 +11,5 @@ if __name__ == "__main__":
         else:
             if user_input:
                 ai_response = mai.prompt(user_input)
-                print(ai_response + "\n")
+                print(purple(ai_response + "\n"))
                 # self.mai.synthesize(ai_response)
