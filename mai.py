@@ -5,10 +5,10 @@ from langchain.llms.bedrock import Bedrock
 from langchain.memory import ConversationBufferMemory
 
 # Dependencies for embedding text in a vector store
-from langchain.embeddings import BedrockEmbeddings
-from langchain.document_loaders import CSVLoader
+from langchain_community.embeddings import BedrockEmbeddings
+from langchain_community.document_loaders import CSVLoader
+from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import BaseMessage
