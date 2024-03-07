@@ -4,7 +4,7 @@ import sys
 import tkinter as tk
 import tkinter.scrolledtext as tkst
 
-from mai import Mai
+from mai.chatbot import Mai
 
 
 class Gui(tk.Frame):

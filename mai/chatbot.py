@@ -13,7 +13,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import BaseMessage
 
-from utils import bedrock, polly, prompts
+from mai.utils import bedrock, polly, prompts
 
 from pygame import mixer
 

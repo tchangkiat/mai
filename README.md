@@ -21,7 +21,12 @@ Install the following dependencies (if not done yet):
 
 ## Usage
 
-1. Run the following command.
+1. Activate virtual environment.
 
-   - MacOS: `sh run.sh`
-   - Windows: `.\run.ps1`
+   - MacOS: `source mai-env/bin/activate`
+   - Windows: `.\mai-env\Scripts\activate`
+
+2. Run the following command to start the Command Line Interface (CLI) or User Interface (UI).
+
+   - CLI: `mai`
+   - UI: `python3 mai/ui.py`

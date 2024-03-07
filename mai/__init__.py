@@ -1,8 +1,8 @@
 import os
 import sys
 
-from mai import Mai
-from utils.colors import purple
+from mai.chatbot import Mai
+from mai.utils.colors import purple
 
 
 def main():
