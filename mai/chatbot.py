@@ -15,6 +15,7 @@ from langchain.schema import BaseMessage
 
 from mai.utils import bedrock, polly, prompts
 
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 from pygame import mixer
 
 
