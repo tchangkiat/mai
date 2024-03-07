@@ -37,7 +37,7 @@ class TaskManager:
         with ThreadPoolExecutorStackTraced(max_workers=10) as executor:
             futures = []
             for task in self.tasks:
-                if isinstance(task["parameters"], str):
+                if type(task["parameters"]) is not list:
                     futures = [executor.submit(task["function"], task["parameters"])]
                 else:
                     futures = [

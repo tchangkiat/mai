@@ -19,7 +19,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 from pygame import mixer
 
 
-class Mai:
+class LLM:
     def __init__(self):
         self.rag = False  # Change to True to use the provided context stored in FAISS
         self.text_to_speech = (

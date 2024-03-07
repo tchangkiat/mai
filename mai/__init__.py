@@ -2,7 +2,7 @@ import click
 import os
 import sys
 
-from mai.chatbot import Mai
+from mai.llm import LLM
 from mai.helpers.colors import purple
 from mai.helpers.taskmanager import TaskManager
 
@@ -20,7 +20,7 @@ def main():
     else:
         _ = os.system("clear")
 
-    mai = Mai()
+    llm = LLM()
 
     while True:
         user_input = input("[You] ").lower()
@@ -29,11 +29,11 @@ def main():
         else:
             if user_input:
                 tm = TaskManager()
-                tm.add_task(mai.prompt, user_input)
+                tm.add_task(llm.prompt, user_input)
                 for result in tm.run_tasks():
                     ai_response = result
                     print(purple(ai_response + "\n"))
-                # self.mai.synthesize(ai_response)
+                # llm.synthesize(ai_response)
 
 
 if __name__ == "__main__":
