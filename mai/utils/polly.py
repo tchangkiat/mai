@@ -27,13 +27,13 @@ def get_polly_client(
     else:
         target_region = region
 
-    print(f"Create new client\n  Using region: {target_region}")
+    # print(f"Create new client\n  Using region: {target_region}")
     session_kwargs = {"region_name": target_region}
     client_kwargs = {**session_kwargs}
 
     profile_name = os.environ.get("AWS_PROFILE")
     if profile_name:
-        print(f"  Using profile: {profile_name}")
+        # print(f"  Using profile: {profile_name}")
         session_kwargs["profile_name"] = profile_name
 
     retry_config = Config(
@@ -49,6 +49,5 @@ def get_polly_client(
         service_name="polly", config=retry_config, **client_kwargs
     )
 
-    print("boto3 Polly client successfully created!")
-    print(polly_client._endpoint)
+    # print(polly_client._endpoint)
     return polly_client
