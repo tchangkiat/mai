@@ -3,7 +3,8 @@ import os
 import sys
 
 from mai.chatbot import Mai
-from mai.utils.colors import purple
+from mai.helpers.colors import purple
+from mai.helpers.taskmanager import TaskManager
 
 
 @click.command()
@@ -27,8 +28,11 @@ def main():
             break
         else:
             if user_input:
-                ai_response = mai.prompt(user_input)
-                print(purple(ai_response + "\n"))
+                tm = TaskManager()
+                tm.add_task(mai.prompt, user_input)
+                for result in tm.run_tasks():
+                    ai_response = result
+                    print(purple(ai_response + "\n"))
                 # self.mai.synthesize(ai_response)
 
 
