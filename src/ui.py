@@ -38,7 +38,7 @@ class Gui(tk.Frame):
             # self.mai.synthesize(ai_response)
 
 
-if __name__ == "__main__":
+def main():
     # Clear the console screen
     if "win32" in sys.platform:
         _ = os.system("cls")
@@ -51,3 +51,7 @@ if __name__ == "__main__":
     root.bind("<Return>", frame.send)
     frame.pack(fill="both", expand=True)
     root.mainloop()
+
+
+if __name__ == "__main__":
+    main()

@@ -19,4 +19,4 @@ echo "Activating virtual environment"
 source $SCRIPTPATH/activate
 
 echo "Running main.py"
-python main.py
+python3 src/ui.py

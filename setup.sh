@@ -25,6 +25,6 @@ fi
 echo "Activating virtual environment"
 source $SCRIPTPATH/activate
 
-python -m pip install -r requirements.txt
+python3 -m pip install -e .
 
-echo "Done" 
+echo "Done"
