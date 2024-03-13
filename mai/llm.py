@@ -1,8 +1,8 @@
 import os
 
 from langchain.chains import ConversationChain
-from langchain.llms.bedrock import Bedrock
 from langchain.memory import ConversationBufferMemory
+from langchain_community.chat_models import BedrockChat
 
 # Dependencies for embedding text in a vector store
 from langchain_community.embeddings import BedrockEmbeddings
@@ -14,6 +14,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.schema import BaseMessage
 
 from mai.helpers import bedrock, polly, prompts
+import mai.constants as c
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 from pygame import mixer
@@ -36,10 +37,10 @@ class LLM:
         )
 
         # Selecting a large language model (LLM)
-        cl_llm = Bedrock(
-            model_id="anthropic.claude-v2:1",
+        cl_llm = BedrockChat(
+            model_id=c.LLM.CLAUDE_3_SONNET,
             client=boto3_bedrock,
-            model_kwargs={"max_tokens_to_sample": 500},
+            model_kwargs={"temperature": 0.1},
         )
 
         if self.rag:
