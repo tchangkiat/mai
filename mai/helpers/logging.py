@@ -1,7 +1,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-from mai.helpers.colors import red
+from mai.helpers.styles import red, grey, bold
 
 
 class Logging(object):
@@ -12,10 +12,6 @@ class Logging(object):
     )
     _logger = logging.getLogger("default")
     _logger.setLevel(logging.INFO)
-    # _sh = logging.StreamHandler()
-    # _sh.setLevel(logging.INFO)
-    # _sh.setFormatter(_formatter)
-    # _logger.addHandler(_sh)
     _fh = RotatingFileHandler("mai.log", maxBytes=1024 * 1024 * 1, backupCount=3)
     _fh.setLevel(logging.INFO)
     _fh.setFormatter(_formatter)
@@ -35,5 +31,9 @@ class Logging(object):
 
     def error(self, message):
         """Log an ERROR message"""
-        print(red("\n" + message))
+        print(
+            bold(red("\n-------------------- Error --------------------\n"))
+            + bold(message)
+            + bold(red("\n-------------------- ----- --------------------\n"))
+        )
         self._logger.error(message)

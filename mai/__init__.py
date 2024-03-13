@@ -3,7 +3,7 @@ import os
 import sys
 
 from mai.llm import LLM
-from mai.helpers.colors import purple
+from mai.helpers.styles import purple
 from mai.helpers.taskmanager import TaskManager
 
 
