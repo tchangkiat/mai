@@ -3,7 +3,7 @@ import os
 import sys
 
 from mai.llm import LLM
-from mai.helpers.styles import purple
+from mai.helpers.styles import purple, red
 from mai.helpers.taskmanager import TaskManager
 
 
@@ -13,14 +13,19 @@ from mai.helpers.taskmanager import TaskManager
     package_name="Mai",
     message="%(package)s v%(version)s",
 )
-def main():
+@click.option(
+    "--rag",
+    is_flag=True,
+    help="Enable Retrieval Augmented Generation",
+)
+def main(rag):
     # Clear the console screen
     if "win32" in sys.platform:
         _ = os.system("cls")
     else:
         _ = os.system("clear")
 
-    llm = LLM()
+    llm = LLM(rag)
 
     while True:
         user_input = input("[You] ").lower()
@@ -32,7 +37,10 @@ def main():
                 tm.add_task(llm.prompt, user_input)
                 for result in tm.run_tasks():
                     ai_response = result
-                    print(purple(ai_response + "\n"))
+                    if ai_response is not None:
+                        print(purple(ai_response + "\n"))
+                    else:
+                        print(red("No response from AI"))
                 # llm.synthesize(ai_response)
 
 

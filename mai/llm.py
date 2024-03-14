@@ -21,8 +21,8 @@ from pygame import mixer
 
 
 class LLM:
-    def __init__(self):
-        self.rag = False  # Change to True to use the provided context stored in FAISS
+    def __init__(self, rag=False):
+        self.rag = rag  # Change to True to use the provided context stored in FAISS
         self.text_to_speech = (
             False  # Change to True to use Amazon Polly to synthesize the LLM's response
         )
@@ -129,7 +129,8 @@ class LLM:
 
     def prompt(self, input):
         if self.rag:
-            response = "[Mai] " + self.retrieval_chain.run({"question": input})
+            invoke_result = self.retrieval_chain.invoke({"question": input})
+            response = "[Mai] " + invoke_result["chat_history"][1].content
         else:
             response = "[Mai] " + self.conversation.predict(input=input)
 
