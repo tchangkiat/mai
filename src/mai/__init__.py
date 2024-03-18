@@ -2,7 +2,7 @@ import click
 import os
 import sys
 
-from mai.llm import LLM
+from mai.helpers.llm import LLM
 from mai.helpers.styles import purple, red
 from mai.helpers.taskmanager import TaskManager
 from mai.helpers.transcriber import Transcriber

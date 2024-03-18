@@ -4,7 +4,7 @@ import sys
 import tkinter as tk
 import tkinter.scrolledtext as tkst
 
-from mai.llm import LLM
+from mai.helpers.llm import LLM
 
 
 class Gui(tk.Frame):
