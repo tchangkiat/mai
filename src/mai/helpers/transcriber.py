@@ -8,7 +8,6 @@ import whisper
 class Transcriber:
     def __init__(
         self,
-        llm,
         callback_func,
         chunk=1024,
         sample_format=pyaudio.paInt16,
@@ -16,7 +15,6 @@ class Transcriber:
         fs=44100,
         filename="output.wav",
     ):
-        self.llm = llm
         self.callback_func = callback_func
         self.chunk = chunk
         self.sample_format = sample_format
@@ -32,8 +30,8 @@ class Transcriber:
             "stopped": "🔄 Stopped recording",
             "tutorial": "To begin or end a recording, press",
             "transcription": "🗣️",
-            "model": "Model - OpenAI Whisper:",
         }
+        self.set_hotkey("space")
 
     def toggle_recording(self):
         self.recording = not self.recording
@@ -57,23 +55,21 @@ class Transcriber:
             self.frames.append(data)
         stream.stop_stream()
         stream.close()
-        self.save_audio()
+        self.transcribe_recording()
 
     def transcribe_recording(self):
-        options = {"language": "English", "task": "transcribe"}
-        result = self.model.transcribe(self.filename, **options, fp16=False)
-        return result["text"]
-
-    def save_audio(self):
         with wave.open(self.filename, "wb") as wf:
             wf.setnchannels(self.channels)
             wf.setsampwidth(self.p.get_sample_size(self.sample_format))
             wf.setframerate(self.fs)
             wf.writeframes(b"".join(self.frames))
 
-        transcription = self.transcribe_recording()
+        options = {"language": "English", "task": "transcribe"}
+        transcription = self.model.transcribe(self.filename, **options, fp16=False)[
+            "text"
+        ]
         print(self.trans["transcription"], transcription)
-        self.callback_func(self.llm, transcription)
+        self.callback_func(transcription)
 
     def set_hotkey(self, hotkey):
         keyboard.add_hotkey(hotkey, self.toggle_recording, suppress=True)

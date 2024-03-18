@@ -3,9 +3,6 @@ import os
 import sys
 
 from mai.helpers.llm import LLM
-from mai.helpers.styles import purple, red
-from mai.helpers.taskmanager import TaskManager
-from mai.helpers.transcriber import Transcriber
 
 
 @click.command()
@@ -22,7 +19,7 @@ from mai.helpers.transcriber import Transcriber
 @click.option(
     "--listen",
     is_flag=True,
-    help="Listen and transribe audio. For macOS, use 'sudo mai --listen'.",
+    help="Listen and transcribe audio before passing the transcription to the LLM. For macOS, use 'sudo mai --listen'.",
 )
 def main(rag, listen):
     # Clear the console screen
@@ -31,11 +28,13 @@ def main(rag, listen):
     else:
         _ = os.system("clear")
 
+    # To resolve OpenMP Error #15: Initializing libomp.dylib, but found libomp.dylib already initialized.
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
+
     llm = LLM(rag)
 
     if listen:
-        tsb = Transcriber(llm, callback_func=llm_prompt)
-        tsb.set_hotkey("space")
+        llm.listen()
     else:
         while True:
             user_input = input("[You] ").lower()
@@ -43,19 +42,7 @@ def main(rag, listen):
                 break
             else:
                 if user_input:
-                    llm_prompt(llm, user_input)
-
-
-def llm_prompt(llm, user_input):
-    tm = TaskManager()
-    tm.add_task(llm.prompt, user_input)
-    for result in tm.run_tasks():
-        ai_response = result
-        if ai_response is not None:
-            print(purple(ai_response + "\n"))
-        else:
-            print(red("No response from AI"))
-    # llm.synthesize(ai_response)
+                    llm.prompt(user_input)
 
 
 if __name__ == "__main__":

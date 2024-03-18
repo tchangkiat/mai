@@ -13,8 +13,9 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import BaseMessage
 
-from mai.helpers import bedrock, polly, prompts
 import mai.constants as c
+from mai.helpers import bedrock, polly, prompts, transcriber, styles
+from mai.helpers.taskmanager import TaskManager
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 from pygame import mixer
@@ -127,7 +128,17 @@ class LLM:
             # Initialize dependency to play sound
             mixer.init()
 
-    def prompt(self, input):
+    def prompt(self, user_input):
+        tm = TaskManager()
+        tm.add_task(self._prompt, user_input)
+        for result in tm.run_tasks():
+            ai_response = result
+            if ai_response is not None:
+                print(styles.purple(ai_response + "\n"))
+            else:
+                print(styles.red("No response from AI"))
+
+    def _prompt(self, input):
         if self.rag:
             invoke_result = self.retrieval_chain.invoke({"question": input})
             response = "[Mai] " + invoke_result["chat_history"][1].content
@@ -150,3 +161,7 @@ class LLM:
             mixer.music.play()
 
         return response
+
+    def listen(self):
+        # Initiate the Transcriber and pass in the function to call back (i.e. to prompt the LLM)
+        transcriber.Transcriber(callback_func=self.prompt)
