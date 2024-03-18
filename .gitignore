@@ -160,4 +160,5 @@ cython_debug/
 #.idea/
 
 mai-env
+output.wav
 response.mp3
