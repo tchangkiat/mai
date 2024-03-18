@@ -29,5 +29,7 @@ Install the following dependencies (if not done yet):
 
 2. Run the following command to start the Command Line Interface (CLI) or User Interface (UI).
 
-   - CLI: `mai`
+   - CLI^: `sudo mai`
    - UI: `python3 src/mai/ui.py`
+
+^ `sudo` is required to capture key presses. For example, key presses are used to start/stop recording voice and stop playing the synthesized text.

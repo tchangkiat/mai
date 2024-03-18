@@ -19,9 +19,14 @@ from mai.helpers.llm import LLM
 @click.option(
     "--listen",
     is_flag=True,
-    help="Listen and transcribe audio before passing the transcription to the LLM. For macOS, use 'sudo mai --listen'.",
+    help="Listen and transcribe audio before passing the transcription to the LLM.",
 )
-def main(rag, listen):
+@click.option(
+    "--synth",
+    is_flag=True,
+    help="Synthesize the response from the LLM to speech.",
+)
+def main(rag, listen, synth):
     # Clear the console screen
     if "win32" in sys.platform:
         _ = os.system("cls")
@@ -31,7 +36,7 @@ def main(rag, listen):
     # To resolve OpenMP Error #15: Initializing libomp.dylib, but found libomp.dylib already initialized.
     os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
-    llm = LLM(rag)
+    llm = LLM(rag, synth)
 
     if listen:
         llm.listen()

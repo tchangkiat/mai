@@ -10,7 +10,6 @@ from langchain_community.document_loaders import CSVLoader
 from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
 from langchain.schema import BaseMessage
 
 import mai.constants as c
@@ -19,14 +18,13 @@ from mai.helpers.taskmanager import TaskManager
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 from pygame import mixer
+import keyboard
 
 
 class LLM:
-    def __init__(self, rag=False):
-        self.rag = rag  # Change to True to use the provided context stored in FAISS
-        self.text_to_speech = (
-            False  # Change to True to use Amazon Polly to synthesize the LLM's response
-        )
+    def __init__(self, rag=False, synth=False):
+        self.rag = rag  # If True, use the provided context stored in FAISS
+        self.synth = synth  # If True, use Amazon Polly to synthesize the LLM's response
 
         # Used for setting up clients for Amazon services
         os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
@@ -119,7 +117,7 @@ class LLM:
 
             self.conversation.prompt = prompts.CONVERSATION
 
-        if self.text_to_speech:
+        if self.synth:
             # Set up client for Amazon Polly
             self.polly_client = polly.get_polly_client(
                 region=os.environ.get("AWS_DEFAULT_REGION", None)
@@ -135,6 +133,30 @@ class LLM:
             ai_response = result
             if ai_response is not None:
                 print(styles.purple(ai_response + "\n"))
+
+                if self.synth:
+                    # Use Amazon Polly to synthesize speech
+                    polly_response = self.polly_client.synthesize_speech(
+                        VoiceId="Joanna",
+                        OutputFormat="mp3",
+                        Text=ai_response,
+                        Engine="neural",
+                    )
+                    # Write to an MP3 file
+                    file = open("response.mp3", "wb")
+                    file.write(polly_response["AudioStream"].read())
+                    file.close()
+
+                    # Play response
+                    mixer.music.load("response.mp3")
+                    mixer.music.play()
+                    print(
+                        styles.grey(
+                            "Press 'esc' to stop playing the synthesized response."
+                        )
+                        + "\n"
+                    )
+                    keyboard.on_press_key("esc", lambda _: mixer.music.stop())
             else:
                 print(styles.red("No response from AI"))
 
@@ -144,21 +166,6 @@ class LLM:
             response = "[Mai] " + invoke_result["chat_history"][1].content
         else:
             response = "[Mai] " + self.conversation.predict(input=input)
-
-        if self.text_to_speech:
-            # Use Amazon Polly to synthesize speech
-            polly_response = self.polly_client.synthesize_speech(
-                VoiceId="Joanna", OutputFormat="mp3", Text=response, Engine="neural"
-            )
-
-            # Write to an MP3 file
-            file = open("response.mp3", "wb")
-            file.write(polly_response["AudioStream"].read())
-            file.close()
-
-            # Play MP3
-            mixer.music.load("response.mp3")
-            mixer.music.play()
 
         return response
 
