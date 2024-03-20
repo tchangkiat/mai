@@ -130,16 +130,15 @@ class LLM:
         tm = TaskManager()
         tm.add_task(self._prompt, user_input)
         for result in tm.run_tasks():
-            ai_response = result
-            if ai_response is not None:
-                print(styles.purple(ai_response + "\n"))
+            if result is not None:
+                print(styles.purple("[Mai] " + result + "\n"))
 
                 if self.synth:
                     # Use Amazon Polly to synthesize speech
                     polly_response = self.polly_client.synthesize_speech(
                         VoiceId="Joanna",
                         OutputFormat="mp3",
-                        Text=ai_response,
+                        Text=result,
                         Engine="neural",
                     )
                     # Write to an MP3 file
@@ -163,9 +162,9 @@ class LLM:
     def _prompt(self, input):
         if self.rag:
             invoke_result = self.retrieval_chain.invoke({"question": input})
-            response = "[Mai] " + invoke_result["chat_history"][1].content
+            response = invoke_result["chat_history"][1].content
         else:
-            response = "[Mai] " + self.conversation.predict(input=input)
+            response = self.conversation.predict(input=input)
 
         return response
 
