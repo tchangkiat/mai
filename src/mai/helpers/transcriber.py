@@ -22,7 +22,7 @@ class Transcriber:
         self.fs = fs
         self.filename = filename
         self.frames = []
-        self.model = whisper.load_model("base")
+        self.model = whisper.load_model("base.en")
         self.p = pyaudio.PyAudio()
         self.recording = False
         self.trans = {
