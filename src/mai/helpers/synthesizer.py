@@ -18,11 +18,13 @@ from mai.helpers import styles
 class Synthesizer:
     def __init__(
         self,
-        type: Optional[str] = c.Synthesizer.Amazon_Polly,
+        type: Optional[
+            str
+        ] = c.Synthesizer.AMAZON_POLLY,  # Change the default synthesizer here
         region: Optional[str] = None,
     ):
         self.type = type
-        if type == c.Synthesizer.Amazon_Polly:
+        if type == c.Synthesizer.AMAZON_POLLY:
             if region is None:
                 target_region = os.environ.get(
                     "AWS_REGION", os.environ.get("AWS_DEFAULT_REGION")
@@ -55,13 +57,15 @@ class Synthesizer:
             mixer.init()
         else:
             self.engine = pyttsx4.init()
+            # Set the voice
             self.engine.setProperty(
                 "voice", "com.apple.speech.synthesis.voice.samantha"
             )
+            # Set the rate which the words are read
             self.engine.setProperty("rate", 175)
 
     def synthesize(self, result):
-        if self.type == c.Synthesizer.Amazon_Polly:
+        if self.type == c.Synthesizer.AMAZON_POLLY:
             # Use Amazon Polly to synthesize speech
             polly_response = self.engine.synthesize_speech(
                 VoiceId="Joanna",
@@ -74,7 +78,7 @@ class Synthesizer:
             file.write(polly_response["AudioStream"].read())
             file.close()
 
-            # Play response
+            # Play response using pygame mixer so that we can stop playing using a keyboard key
             mixer.music.load("response.mp3")
             mixer.music.play()
             print(
@@ -85,4 +89,8 @@ class Synthesizer:
         else:
             self.engine.say(result)
             self.engine.runAndWait()
-            keyboard.on_press_key("esc", lambda _: self.engine.stop())
+            # NSSS (the default MacOS speech engine) doesn't support exporting to mp3
+            # self.engine.save_to_file(result, "response.wav")
+            # Playing wav files exported by pyttsx4 with pygame mixer does not product any sound
+            # mixer.music.load("response.wav")
+            # mixer.music.play()

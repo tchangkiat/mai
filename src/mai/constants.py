@@ -4,5 +4,5 @@ class LLM:
 
 
 class Synthesizer:
-    Amazon_Polly = "amazon-polly"
+    AMAZON_POLLY = "amazon-polly"
     PYTTSX4 = "pyttsx4"
