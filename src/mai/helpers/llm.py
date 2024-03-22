@@ -13,18 +13,14 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.schema import BaseMessage
 
 import mai.constants as c
-from mai.helpers import bedrock, polly, prompts, transcriber, styles
+from mai.helpers import bedrock, prompts, styles, synthesizer, transcriber
 from mai.helpers.taskmanager import TaskManager
-
-os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
-from pygame import mixer
-import keyboard
 
 
 class LLM:
     def __init__(self, rag=False, synth=False):
         self.rag = rag  # If True, use the provided context stored in FAISS
-        self.synth = synth  # If True, use Amazon Polly to synthesize the LLM's response
+        self.synth = synth  # If True, synthesize the LLM's response
 
         # Used for setting up clients for Amazon services
         os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
@@ -50,20 +46,24 @@ class LLM:
 
             loader = CSVLoader("./rag_data/aws-enterprise-support.csv")
             documents_aws_es = loader.load()
-            print(f"Number of documents={len(documents_aws_es)}")
+            print(styles.grey(f"Number of documents={len(documents_aws_es)}"))
 
             docs = CharacterTextSplitter(
                 chunk_size=2000, chunk_overlap=400, separator=","
             ).split_documents(documents_aws_es)
 
-            print(f"Number of documents after split and chunking={len(docs)}")
+            print(
+                styles.grey(f"Number of documents after split and chunking={len(docs)}")
+            )
 
             vectorstore_faiss_aws = FAISS.from_documents(
                 documents=docs, embedding=br_embeddings
             )
 
             print(
-                f"vectorstore_faiss_aws: number of elements in the index={vectorstore_faiss_aws.index.ntotal}::"
+                styles.grey(
+                    f"Number of elements in the index={vectorstore_faiss_aws.index.ntotal}"
+                )
             )
 
             # We are also providing a different chat history retriever which outputs the history as a Claude chat (ie including the \n\n)
@@ -118,13 +118,9 @@ class LLM:
             self.conversation.prompt = prompts.CONVERSATION
 
         if self.synth:
-            # Set up client for Amazon Polly
-            self.polly_client = polly.get_polly_client(
+            self.synthesizer = synthesizer.Synthesizer(
                 region=os.environ.get("AWS_DEFAULT_REGION", None)
             )
-
-            # Initialize dependency to play sound
-            mixer.init()
 
     def prompt(self, user_input):
         tm = TaskManager()
@@ -134,28 +130,7 @@ class LLM:
                 print(styles.purple("[Mai] " + result + "\n"))
 
                 if self.synth:
-                    # Use Amazon Polly to synthesize speech
-                    polly_response = self.polly_client.synthesize_speech(
-                        VoiceId="Joanna",
-                        OutputFormat="mp3",
-                        Text=result,
-                        Engine="neural",
-                    )
-                    # Write to an MP3 file
-                    file = open("response.mp3", "wb")
-                    file.write(polly_response["AudioStream"].read())
-                    file.close()
-
-                    # Play response
-                    mixer.music.load("response.mp3")
-                    mixer.music.play()
-                    print(
-                        styles.grey(
-                            "Press 'esc' to stop playing the synthesized response."
-                        )
-                        + "\n"
-                    )
-                    keyboard.on_press_key("esc", lambda _: mixer.music.stop())
+                    self.synthesizer.synthesize(result)
             else:
                 print(styles.red("No response from AI"))
 
