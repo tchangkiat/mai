@@ -66,8 +66,10 @@ class TaskManager:
                 exception = future.exception()
                 if not exception:
                     results.append(future.result())
-            return results
-        return []
+            executor.shutdown()
+        else:
+            executor.shutdown(wait=False)
+        return results
 
     def _all_futures_completed(self, futures):
         for future in futures:
