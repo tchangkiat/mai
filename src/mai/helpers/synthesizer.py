@@ -21,7 +21,7 @@ class Synthesizer:
         self,
         type: Optional[
             str
-        ] = c.Synthesizer.AMAZON_POLLY,  # Change the default synthesizer here
+        ] = c.Synthesizer.PYTTSX4,  # Change the default synthesizer here
         region: Optional[str] = None,
     ):
         self.type = type
