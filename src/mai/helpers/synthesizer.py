@@ -13,6 +13,7 @@ import pyttsx4
 
 from mai import constants as c
 from mai.helpers import styles
+from mai.helpers.taskmanager import TaskManager
 
 
 class Synthesizer:
@@ -65,6 +66,9 @@ class Synthesizer:
             self.engine.setProperty("rate", 175)
 
     def synthesize(self, result):
+        print(
+            styles.grey("Press 'esc' to stop playing the synthesized response.") + "\n"
+        )
         if self.type == c.Synthesizer.AMAZON_POLLY:
             # Use Amazon Polly to synthesize speech
             polly_response = self.engine.synthesize_speech(
@@ -81,16 +85,15 @@ class Synthesizer:
             # Play response using pygame mixer so that we can stop playing using a keyboard key
             mixer.music.load("response.mp3")
             mixer.music.play()
-            print(
-                styles.grey("Press 'esc' to stop playing the synthesized response.")
-                + "\n"
-            )
+
             keyboard.on_press_key("esc", lambda _: mixer.music.stop())
         else:
-            self.engine.say(result)
-            self.engine.runAndWait()
-            # NSSS (the default MacOS speech engine) doesn't support exporting to mp3
-            # self.engine.save_to_file(result, "response.wav")
-            # Playing wav files exported by pyttsx4 with pygame mixer does not product any sound
-            # mixer.music.load("response.wav")
-            # mixer.music.play()
+            tm = TaskManager()
+            tm.add_task(self._pyttsx4_synthesize, result)
+            tm.run_tasks(wait=False)
+
+            keyboard.on_press_key("esc", lambda _: self.engine.stop())
+
+    def _pyttsx4_synthesize(self, result):
+        self.engine.say(result)
+        self.engine.runAndWait()

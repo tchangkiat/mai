@@ -31,20 +31,20 @@ class TaskManager:
         """Add task to run later"""
         self.tasks.append({"function": function, "parameters": parameters})
 
-    def run_tasks(self):
+    def run_tasks(self, wait=True):
         """Run tasks that are added"""
         results = []
-        with ThreadPoolExecutorStackTraced(max_workers=10) as executor:
-            futures = []
-            for task in self.tasks:
-                if type(task["parameters"]) is not list:
-                    futures = [executor.submit(task["function"], task["parameters"])]
-                else:
-                    futures = [
-                        executor.submit(task["function"], parameter)
-                        for parameter in task["parameters"]
-                    ]
-
+        executor = ThreadPoolExecutorStackTraced(max_workers=10)
+        futures = []
+        for task in self.tasks:
+            if type(task["parameters"]) is not list:
+                futures = [executor.submit(task["function"], task["parameters"])]
+            else:
+                futures = [
+                    executor.submit(task["function"], parameter)
+                    for parameter in task["parameters"]
+                ]
+        if wait:
             bar = [
                 " [=     ]",
                 " [ =    ]",
@@ -66,7 +66,8 @@ class TaskManager:
                 exception = future.exception()
                 if not exception:
                     results.append(future.result())
-        return results
+            return results
+        return []
 
     def _all_futures_completed(self, futures):
         for future in futures:
