@@ -13,8 +13,10 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.schema import BaseMessage
 
 import mai.constants as c
-from mai.helpers import bedrock, prompts, styles, synthesizer, transcriber
+from mai.constants import prompts
+from mai.helpers import synthesizer, transcriber
 from mai.helpers.taskmanager import TaskManager
+from mai.utils import bedrock, styles
 
 
 class LLM:
@@ -98,15 +100,13 @@ class LLM:
                 memory=memory_chain,
                 get_chat_history=_get_chat_history,
                 # verbose=True,
-                condense_question_prompt=prompts.CONDENSE_PROMPT,
+                condense_question_prompt=prompts.CONDENSE,
                 chain_type="stuff",  # 'refine',
                 # max_tokens_limit=300
             )
 
             # the LLMChain prompt to get the answer. the ConversationalRetrievalChange does not expose this parameter in the constructor
-            self.retrieval_chain.combine_docs_chain.llm_chain.prompt = (
-                prompts.LLM_CHAIN_PROMPT
-            )
+            self.retrieval_chain.combine_docs_chain.llm_chain.prompt = prompts.LLM_CHAIN
         else:
             # Create conversation chain using LangChain for Large Language Model (LLM) in Amazon Bedrock
             self.conversation = ConversationChain(

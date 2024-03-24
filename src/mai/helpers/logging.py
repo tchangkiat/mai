@@ -1,7 +1,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-from mai.helpers.styles import red, grey, bold
+from mai.utils.styles import red, bold
 
 
 class Logging(object):

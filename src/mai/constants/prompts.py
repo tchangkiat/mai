@@ -20,7 +20,7 @@ Answer only with the new question.
 Human: How would you ask the question considering the previous conversation: {question}
 
 Assistant: Question:"""
-CONDENSE_PROMPT = PromptTemplate.from_template(condense_prompt)
+CONDENSE = PromptTemplate.from_template(condense_prompt)
 
 llm_chain_prompt = """
 {context}
@@ -31,4 +31,4 @@ If the answer is not in the context say "Sorry, I don't know as the answer was n
 
 Assistant:"""
 
-LLM_CHAIN_PROMPT = PromptTemplate.from_template(llm_chain_prompt)
+LLM_CHAIN = PromptTemplate.from_template(llm_chain_prompt)

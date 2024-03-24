@@ -12,8 +12,8 @@ import keyboard
 import pyttsx4
 
 from mai import constants as c
-from mai.helpers import styles
 from mai.helpers.taskmanager import TaskManager
+from mai.utils import styles
 
 
 class Synthesizer:
