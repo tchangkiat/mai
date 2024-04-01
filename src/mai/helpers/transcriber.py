@@ -26,9 +26,9 @@ class Transcriber:
         self.fs = fs
         self.filename = filename
         self.frames = []
-        self.log.sys("Loading OpenAI Whisper Model")
+        self.log.debug("Loading OpenAI Whisper Model")
         self.model = whisper.load_model("base.en")
-        self.log.sys("Loaded OpenAI Whisper Model")
+        self.log.debug("Loaded OpenAI Whisper Model")
         self.p = pyaudio.PyAudio()
         self.recording = False
         self.trans = {

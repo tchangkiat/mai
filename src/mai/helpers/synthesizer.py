@@ -59,7 +59,7 @@ class Synthesizer:
             # print(polly_client._endpoint)
 
             mixer.init()
-            self.log.sys("Using Amazon Polly as synthesizer")
+            self.log.debug("Using Amazon Polly as synthesizer")
         else:
             self.engine = pyttsx4.init()
             # Set the voice
@@ -68,7 +68,7 @@ class Synthesizer:
             )
             # Set the rate which the words are read
             self.engine.setProperty("rate", 175)
-            self.log.sys("Using pyttsx4 as synthesizer")
+            self.log.debug("Using pyttsx4 as synthesizer")
 
     def synthesize(self, result):
         print(

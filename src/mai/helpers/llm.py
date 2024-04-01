@@ -42,7 +42,7 @@ class LLM:
             client=boto3_bedrock,
             model_kwargs={"temperature": 0.1},
         )
-        self.log.sys(f"Using LLM: {model_id}")
+        self.log.debug(f"Using LLM: {model_id}")
 
         if self.rag:
             # Store text embeddings in vector store
@@ -52,19 +52,19 @@ class LLM:
 
             loader = CSVLoader("./rag_data/aws-enterprise-support.csv")
             documents_aws_es = loader.load()
-            self.log.sys(f"Number of documents: {len(documents_aws_es)}")
+            self.log.debug(f"Number of documents: {len(documents_aws_es)}")
 
             docs = CharacterTextSplitter(
                 chunk_size=2000, chunk_overlap=400, separator=","
             ).split_documents(documents_aws_es)
 
-            self.log.sys(f"Number of documents after split and chunking: {len(docs)}")
+            self.log.debug(f"Number of documents after split and chunking: {len(docs)}")
 
             vectorstore_faiss_aws = FAISS.from_documents(
                 documents=docs, embedding=br_embeddings
             )
 
-            self.log.sys(
+            self.log.debug(
                 f"Number of elements in the index: {vectorstore_faiss_aws.index.ntotal}"
             )
 
