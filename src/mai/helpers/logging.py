@@ -1,7 +1,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-from mai.utils.styles import red, bold
+from mai.utils.styles import red, bold, grey
 
 
 class Logging(object):
@@ -37,3 +37,8 @@ class Logging(object):
             + bold(red("\n-------------------- ----- --------------------\n"))
         )
         self._logger.error(message)
+
+    def sys(self, message):
+        """Log a SYSTEM message"""
+        print(grey(message))
+        self._logger.info(message)

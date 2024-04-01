@@ -4,6 +4,8 @@ import threading
 import keyboard
 import whisper
 
+from mai.helpers import logging
+
 
 class Transcriber:
     def __init__(
@@ -15,6 +17,8 @@ class Transcriber:
         fs=44100,
         filename="output.wav",
     ):
+        self.log = logging.Logging.get_instance()
+
         self.callback_func = callback_func
         self.chunk = chunk
         self.sample_format = sample_format
@@ -22,7 +26,9 @@ class Transcriber:
         self.fs = fs
         self.filename = filename
         self.frames = []
+        self.log.sys("Loading OpenAI Whisper Model")
         self.model = whisper.load_model("base.en")
+        self.log.sys("Loaded OpenAI Whisper Model")
         self.p = pyaudio.PyAudio()
         self.recording = False
         self.trans = {

@@ -14,7 +14,7 @@ from langchain.schema import BaseMessage
 
 import mai.constants as c
 from mai.constants import prompts
-from mai.helpers import synthesizer, transcriber
+from mai.helpers import logging, synthesizer, transcriber
 from mai.helpers.taskmanager import TaskManager
 from mai.utils import bedrock, styles
 
@@ -23,6 +23,8 @@ class LLM:
     def __init__(self, rag=False, synth=False):
         self.rag = rag  # If True, use the provided context stored in FAISS
         self.synth = synth  # If True, synthesize the LLM's response
+
+        self.log = logging.Logging.get_instance()
 
         # Used for setting up clients for Amazon services
         os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
@@ -33,12 +35,14 @@ class LLM:
             region=os.environ.get("AWS_DEFAULT_REGION", None)
         )
 
+        model_id = c.LLM.CLAUDE_3_SONNET
         # Selecting a large language model (LLM)
         cl_llm = BedrockChat(
-            model_id=c.LLM.CLAUDE_3_SONNET,
+            model_id=model_id,
             client=boto3_bedrock,
             model_kwargs={"temperature": 0.1},
         )
+        self.log.sys(f"Using LLM: {model_id}")
 
         if self.rag:
             # Store text embeddings in vector store
@@ -48,24 +52,20 @@ class LLM:
 
             loader = CSVLoader("./rag_data/aws-enterprise-support.csv")
             documents_aws_es = loader.load()
-            print(styles.grey(f"Number of documents={len(documents_aws_es)}"))
+            self.log.sys(f"Number of documents: {len(documents_aws_es)}")
 
             docs = CharacterTextSplitter(
                 chunk_size=2000, chunk_overlap=400, separator=","
             ).split_documents(documents_aws_es)
 
-            print(
-                styles.grey(f"Number of documents after split and chunking={len(docs)}")
-            )
+            self.log.sys(f"Number of documents after split and chunking: {len(docs)}")
 
             vectorstore_faiss_aws = FAISS.from_documents(
                 documents=docs, embedding=br_embeddings
             )
 
-            print(
-                styles.grey(
-                    f"Number of elements in the index={vectorstore_faiss_aws.index.ntotal}"
-                )
+            self.log.sys(
+                f"Number of elements in the index: {vectorstore_faiss_aws.index.ntotal}"
             )
 
             # We are also providing a different chat history retriever which outputs the history as a Claude chat (ie including the \n\n)

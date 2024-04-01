@@ -12,6 +12,7 @@ import keyboard
 import pyttsx4
 
 from mai import constants as c
+from mai.helpers import logging
 from mai.helpers.taskmanager import TaskManager
 from mai.utils import styles
 
@@ -24,6 +25,8 @@ class Synthesizer:
         ] = c.Synthesizer.PYTTSX4,  # Change the default synthesizer here
         region: Optional[str] = None,
     ):
+        self.log = logging.Logging.get_instance()
+
         self.type = type
         if type == c.Synthesizer.AMAZON_POLLY:
             if region is None:
@@ -56,6 +59,7 @@ class Synthesizer:
             # print(polly_client._endpoint)
 
             mixer.init()
+            self.log.sys("Using Amazon Polly as synthesizer")
         else:
             self.engine = pyttsx4.init()
             # Set the voice
@@ -64,6 +68,7 @@ class Synthesizer:
             )
             # Set the rate which the words are read
             self.engine.setProperty("rate", 175)
+            self.log.sys("Using pyttsx4 as synthesizer")
 
     def synthesize(self, result):
         print(
