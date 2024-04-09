@@ -12,9 +12,9 @@ import keyboard
 import pyttsx4
 
 from mai import constants as c
-from mai.helpers import logging
-from mai.helpers.taskmanager import TaskManager
-from mai.utils import styles
+from pyck.helpers.taskmanager import TaskManager
+from pyck.utils.styles import grey
+from pyck.helpers.logging import Logging
 
 
 class Synthesizer:
@@ -25,7 +25,7 @@ class Synthesizer:
         ] = c.Synthesizer.PYTTSX4,  # Change the default synthesizer here
         region: Optional[str] = None,
     ):
-        self.log = logging.Logging.get_instance()
+        self.log = Logging.get_instance()
 
         self.type = type
         if type == c.Synthesizer.AMAZON_POLLY:
@@ -71,9 +71,7 @@ class Synthesizer:
             self.log.debug("Using pyttsx4 as synthesizer")
 
     def synthesize(self, result):
-        print(
-            styles.grey("Press 'esc' to stop playing the synthesized response.") + "\n"
-        )
+        print(grey("Press 'esc' to stop playing the synthesized response.") + "\n")
         if self.type == c.Synthesizer.AMAZON_POLLY:
             # Use Amazon Polly to synthesize speech
             polly_response = self.engine.synthesize_speech(

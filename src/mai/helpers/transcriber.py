@@ -4,7 +4,7 @@ import threading
 import keyboard
 import whisper
 
-from mai.helpers import logging
+from pyck.helpers.logging import Logging
 
 
 class Transcriber:
@@ -17,7 +17,7 @@ class Transcriber:
         fs=44100,
         filename="output.wav",
     ):
-        self.log = logging.Logging.get_instance()
+        self.log = Logging.get_instance()
 
         self.callback_func = callback_func
         self.chunk = chunk

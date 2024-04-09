@@ -14,9 +14,11 @@ from langchain.schema import BaseMessage
 
 import mai.constants as c
 from mai.constants import prompts
-from mai.helpers import logging, synthesizer, transcriber
-from mai.helpers.taskmanager import TaskManager
-from mai.utils import bedrock, styles
+from mai.helpers import synthesizer, transcriber
+from mai.utils import bedrock
+from pyck.helpers.logging import Logging
+from pyck.helpers.taskmanager import TaskManager
+from pyck.utils.styles import purple, red
 
 
 class LLM:
@@ -24,7 +26,7 @@ class LLM:
         self.rag = rag  # If True, use the provided context stored in FAISS
         self.synth = synth  # If True, synthesize the LLM's response
 
-        self.log = logging.Logging.get_instance()
+        self.log = Logging.get_instance()
 
         # Used for setting up clients for Amazon services
         os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
@@ -127,12 +129,12 @@ class LLM:
         tm.add_task(self._prompt, user_input)
         for result in tm.run_tasks():
             if result is not None:
-                print(styles.purple("[Mai] " + result + "\n"))
+                print(purple("[Mai] " + result + "\n"))
 
                 if self.synth:
                     self.synthesizer.synthesize(result)
             else:
-                print(styles.red("No response from AI"))
+                print(red("No response from AI"))
 
     def _prompt(self, input):
         if self.rag:

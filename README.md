@@ -33,3 +33,12 @@ Install the following dependencies (if not done yet):
    - UI: `python3 src/mai/ui.py`
 
 ^ `sudo` is required to capture key presses. For example, key presses are used to start/stop recording voice and stop playing the synthesized text.
+
+## Troubleshooting
+
+If you encounter the error `...lib/libarchive.13.dylib' (no such file)` in macOS when using the `--listen` feature, please run the following commands:
+
+```bash
+brew install libarchive
+sudo ln -s /usr/local/opt/libarchive/lib/libarchive.13.dylib /usr/local/lib/
+```
