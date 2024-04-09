@@ -127,7 +127,8 @@ class LLM:
     def prompt(self, user_input):
         tm = TaskManager()
         tm.add_task(self._prompt, user_input)
-        for result in tm.run_tasks():
+        results, _ = tm.run_tasks()
+        for result in results:
             if result is not None:
                 print(purple("[Mai] " + result + "\n"))
 
