@@ -92,7 +92,7 @@ class Synthesizer:
             keyboard.on_press_key("esc", lambda _: mixer.music.stop())
         else:
             tm = TaskManager()
-            tm.add_task(self._pyttsx4_synthesize, result)
+            tm.add_task(self._pyttsx4_synthesize, [result])
             tm.run_tasks(wait=False)
 
             keyboard.on_press_key("esc", lambda _: self.engine.stop())
