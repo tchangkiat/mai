@@ -25,6 +25,7 @@ fi
 echo "Activating virtual environment"
 source $SCRIPTPATH/activate
 
+python3 -m pip install --upgrade pip
 python3 -m pip install -e .
 
 echo "Done"
