@@ -10,7 +10,7 @@ readme = "README.md"
 license = { file = "LICENSE" }
 
 requires-python = ">=3.9"
-dependencies = ["boto3==1.37.20", "click==8.1.8", "faiss-cpu>=1.8", "keyboard==0.13.5", "langchain==0.1.13", "openai-whisper==20240930", "pyaudio==0.2.14", "pygame==2.6.1", "pyttsx4==3.0.15", "pyck@git+https://github.com/tchangkiat/pyck"]
+dependencies = ["boto3==1.37.20", "click==8.1.8", "faiss-cpu>=1.8", "keyboard==0.13.5", "langchain[aws]>=0.3.0", "langchain-aws>=0.2.0", "langchain-community>=0.0.1", "langchain-core>=0.1.0", "langgraph>=0.3.0", "openai-whisper==20240930", "pyaudio==0.2.14", "pygame==2.6.1", "pyttsx4==3.0.15", "pyck@git+https://github.com/tchangkiat/pyck"]
 
 [project.scripts]
 mai = "mai:main"

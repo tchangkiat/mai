@@ -1,24 +1,27 @@
 import os
+import faiss
 
-from langchain.chains import ConversationChain
-from langchain.memory import ConversationBufferMemory
-from langchain_community.chat_models import BedrockChat
+from typing import Annotated
 
-# Dependencies for embedding text in a vector store
-from langchain_community.embeddings import BedrockEmbeddings
+from langchain.chat_models import init_chat_model
+from langchain_core.messages import SystemMessage, HumanMessage, trim_messages
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import START, END, MessagesState, StateGraph
+
+# Dependencies for RAG
+from langchain_aws import BedrockEmbeddings
+from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_community.document_loaders import CSVLoader
 from langchain_community.vectorstores import FAISS
+from langchain_core.tools import tool
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.chains import ConversationalRetrievalChain
-from langchain.schema import BaseMessage
+from langgraph.prebuilt import ToolNode, tools_condition, InjectedStore
 
 import mai.constants as c
-from mai.constants import prompts
 from mai.helpers import synthesizer, transcriber
-from mai.utils import bedrock
 from pyck.helpers.logging import Logging
-from pyck.helpers.taskmanager import TaskManager
-from pyck.utils.styles import purple, red
+from pyck.utils.styles import purple
 
 
 class LLM:
@@ -32,24 +35,32 @@ class LLM:
         os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
         os.environ["AWS_PROFILE"] = "default"
 
-        # Set up client for Amazon Bedrock
-        boto3_bedrock = bedrock.get_bedrock_client(
-            region=os.environ.get("AWS_DEFAULT_REGION", None)
-        )
+        model_id = c.MODELS.ANTHROPIC.CLAUDE_3_SONNET
 
-        model_id = c.LLM.CLAUDE_3_SONNET
-        # Selecting a large language model (LLM)
-        cl_llm = BedrockChat(
-            model_id=model_id,
-            client=boto3_bedrock,
-            model_kwargs={"temperature": 0.1},
+        self.llm = init_chat_model(
+            model_id,
+            model_provider="bedrock_converse",
+            temperature=0.1,
         )
         self.log.debug(f"Using LLM: {model_id}")
 
+        self.trimmer = trim_messages(
+            max_tokens=65,
+            strategy="last",
+            token_counter=self.llm,
+            include_system=True,
+            allow_partial=False,
+            start_on="human",
+        )
+
+        self.messages = []
+        graph = StateGraph(state_schema=MessagesState)
+        memory = MemorySaver()
+
         if self.rag:
             # Store text embeddings in vector store
-            br_embeddings = BedrockEmbeddings(
-                model_id="amazon.titan-embed-text-v1", client=boto3_bedrock
+            embeddings = BedrockEmbeddings(
+                model_id=c.MODELS.AMAZON.TITAN_TEXT_EMBEDDING
             )
 
             loader = CSVLoader("./rag_data/aws-enterprise-support.csv")
@@ -62,62 +73,45 @@ class LLM:
 
             self.log.debug(f"Number of documents after split and chunking: {len(docs)}")
 
-            vectorstore_faiss_aws = FAISS.from_documents(
-                documents=docs, embedding=br_embeddings
+            embedding_dim = len(embeddings.embed_query("aws"))
+            index = faiss.IndexFlatL2(embedding_dim)
+
+            vector_store = FAISS(
+                embedding_function=embeddings,
+                index=index,
+                docstore=InMemoryDocstore(),
+                index_to_docstore_id={},
             )
+
+            vector_store.add_documents(documents=docs)
 
             self.log.debug(
-                f"Number of elements in the index: {vectorstore_faiss_aws.index.ntotal}"
+                f"Number of elements in the index: {vector_store.index.ntotal}"
             )
 
-            # We are also providing a different chat history retriever which outputs the history as a Claude chat (ie including the \n\n)
-            _ROLE_MAP = {"human": "\n\nHuman: ", "ai": "\n\nAssistant: "}
+            tools = ToolNode([self.retrieve])
 
-            def _get_chat_history(chat_history):
-                buffer = ""
-                for dialogue_turn in chat_history:
-                    if isinstance(dialogue_turn, BaseMessage):
-                        role_prefix = _ROLE_MAP.get(
-                            dialogue_turn.type, f"{dialogue_turn.type}: "
-                        )
-                        buffer += f"\n{role_prefix}{dialogue_turn.content}"
-                    elif isinstance(dialogue_turn, tuple):
-                        human = "\n\nHuman: " + dialogue_turn[0]
-                        ai = "\n\nAssistant: " + dialogue_turn[1]
-                        buffer += "\n" + "\n".join([human, ai])
-                    else:
-                        raise ValueError(
-                            f"Unsupported chat history format: {type(dialogue_turn)}."
-                            f" Full chat history: {chat_history} "
-                        )
-                return buffer
+            graph = StateGraph(state_schema=MessagesState)
 
-            memory_chain = ConversationBufferMemory(
-                memory_key="chat_history", return_messages=True
+            graph.add_node(self.query_or_respond)
+            graph.add_node(tools)
+            graph.add_node(self.generate)
+
+            graph.set_entry_point("query_or_respond")
+            graph.add_conditional_edges(
+                "query_or_respond",
+                tools_condition,
+                {END: END, "tools": "tools"},
             )
-            self.retrieval_chain = ConversationalRetrievalChain.from_llm(
-                llm=cl_llm,
-                retriever=vectorstore_faiss_aws.as_retriever(),
-                # retriever=vectorstore_faiss_aws.as_retriever(search_type='similarity', search_kwargs={"k": 8}),
-                memory=memory_chain,
-                get_chat_history=_get_chat_history,
-                # verbose=True,
-                condense_question_prompt=prompts.CONDENSE,
-                chain_type="stuff",  # 'refine',
-                # max_tokens_limit=300
-            )
+            graph.add_edge("tools", "generate")
+            graph.add_edge("generate", END)
 
-            # the LLMChain prompt to get the answer. the ConversationalRetrievalChange does not expose this parameter in the constructor
-            self.retrieval_chain.combine_docs_chain.llm_chain.prompt = prompts.LLM_CHAIN
+            self.app = graph.compile(checkpointer=memory, store=vector_store)
         else:
-            # Create conversation chain using LangChain for Large Language Model (LLM) in Amazon Bedrock
-            self.conversation = ConversationChain(
-                llm=cl_llm,
-                verbose=False,
-                memory=ConversationBufferMemory(ai_prefix="Assistant"),
-            )
+            graph.add_edge(START, "model")
+            graph.add_node("model", self.call_model)
 
-            self.conversation.prompt = prompts.CONVERSATION
+            self.app = graph.compile(checkpointer=memory)
 
         if self.synth:
             self.synthesizer = synthesizer.Synthesizer(
@@ -125,26 +119,94 @@ class LLM:
             )
 
     def prompt(self, user_input):
-        tm = TaskManager()
-        tm.add_task(self._prompt, [user_input])
-        results, _ = tm.run_tasks()
-        for result in results:
-            if result is not None:
-                print(purple("[Mai] " + result + "\n"))
+        result = self._prompt(user_input)
+        print(purple("[Mai] " + result + "\n"))
 
-                if self.synth:
-                    self.synthesizer.synthesize(result)
-            else:
-                print(red("No response from AI"))
+        if self.synth:
+            self.synthesizer.synthesize(result)
 
     def _prompt(self, input):
-        if self.rag:
-            invoke_result = self.retrieval_chain.invoke({"question": input})
-            response = invoke_result["chat_history"][1].content
-        else:
-            response = self.conversation.predict(input=input)
+        trimmed_messages = self.trimmer.invoke(self.messages)
+        output = self.app.invoke(
+            {"messages": trimmed_messages + [HumanMessage(input)]},
+            config={"configurable": {"thread_id": "1"}},
+        )
 
-        return response
+        return output["messages"][-1].content
+
+    # Define the function that calls the model
+    def call_model(self, state: MessagesState):
+        self.prompt_template = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "Your name is Mai. You are an AI assistant for question-answering tasks. Use at maximum 4 sentences to answer the question.",
+                ),
+                MessagesPlaceholder(variable_name="messages"),
+            ]
+        )
+        prompt = self.prompt_template.invoke(state)
+        response = self.llm.invoke(prompt)
+        return {"messages": response}
+
+    # RAG - Retrieval function
+    @tool(response_format="content_and_artifact")
+    def retrieve(
+        query: str,
+        store: Annotated[FAISS, InjectedStore],
+    ):
+        """Retrieve information related to a query."""
+        print("----------------------------")
+        print("Retrieving from vector store")
+        print("----------------------------")
+        retrieved_docs = store.similarity_search(query, k=2)
+        serialized = "\n\n".join(
+            (f"Source: {doc.metadata}\n" f"Content: {doc.page_content}")
+            for doc in retrieved_docs
+        )
+        return serialized, retrieved_docs
+
+    # RAG - Generate an AIMessage that may include a tool-call to be sent.
+    def query_or_respond(self, state: MessagesState):
+        """Generate tool call for retrieval or respond."""
+        llm_with_tools = self.llm.bind_tools([self.retrieve])
+        response = llm_with_tools.invoke(state["messages"])
+        # MessagesState appends messages to state instead of overwriting
+        return {"messages": [response]}
+
+    # RAG - Generate a response using the retrieved content.
+    def generate(self, state: MessagesState):
+        """Generate answer."""
+        # Get generated ToolMessages
+        recent_tool_messages = []
+        for message in reversed(state["messages"]):
+            if message.type == "tool":
+                recent_tool_messages.append(message)
+            else:
+                break
+        tool_messages = recent_tool_messages[::-1]
+
+        # Format into prompt
+        docs_content = "\n\n".join(doc.content for doc in tool_messages)
+        system_message_content = (
+            "Your name is Mai. You are an AI assistant for question-answering tasks. "
+            "Use the following pieces of retrieved context to answer "
+            "the question. If you don't know the answer, say that you "
+            "don't know. Use three sentences maximum and keep the "
+            "answer concise."
+            "\n\n"
+            f"{docs_content}"
+        )
+        conversation_messages = [
+            message
+            for message in state["messages"]
+            if message.type in ("human", "system")
+            or (message.type == "ai" and not message.tool_calls)
+        ]
+        prompt = [SystemMessage(system_message_content)] + conversation_messages
+
+        response = self.llm.invoke(prompt)
+        return {"messages": [response]}
 
     def listen(self):
         # Initiate the Transcriber and pass in the function to call back (i.e. to prompt the LLM)

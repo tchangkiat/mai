@@ -1,6 +1,11 @@
-class LLM:
-    CLAUDE_2_1 = "anthropic.claude-v2:1"
-    CLAUDE_3_SONNET = "anthropic.claude-3-sonnet-20240229-v1:0"
+class MODELS:
+    class ANTHROPIC:
+        CLAUDE_3_SONNET = "anthropic.claude-3-sonnet-20240229-v1:0"
+        CLAUDE_3_5_SONNET = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+        CLAUDE_3_7_SONNET = "anthropic.claude-3-7-sonnet-20250219-v1:0"
+
+    class AMAZON:
+        TITAN_TEXT_EMBEDDING = "amazon.titan-embed-text-v2:0"
 
 
 class Synthesizer:
