@@ -37,8 +37,8 @@ class LLM:
 
         model_id = c.MODELS.ANTHROPIC.CLAUDE_3_7_SONNET
         self.llm = ChatBedrock(
-            model="us.anthropic.claude-3-7-sonnet-20250219-v1:0",
-            region="us-east-1",
+            model=model_id,
+            region=os.environ["AWS_DEFAULT_REGION"],
             max_tokens=1500,
             model_kwargs={
                 "thinking": {"type": "enabled", "budget_tokens": 1024},
