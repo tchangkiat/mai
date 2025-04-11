@@ -3,7 +3,7 @@ import faiss
 
 from typing import Annotated
 
-from langchain.chat_models import init_chat_model
+from langchain_aws import ChatBedrock
 from langchain_core.messages import SystemMessage, HumanMessage, trim_messages
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.checkpoint.memory import MemorySaver
@@ -35,12 +35,14 @@ class LLM:
         os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
         os.environ["AWS_PROFILE"] = "default"
 
-        model_id = c.MODELS.ANTHROPIC.CLAUDE_3_SONNET
-
-        self.llm = init_chat_model(
-            model_id,
-            model_provider="bedrock_converse",
-            temperature=0.1,
+        model_id = c.MODELS.ANTHROPIC.CLAUDE_3_7_SONNET
+        self.llm = ChatBedrock(
+            model="us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+            region="us-east-1",
+            max_tokens=1500,
+            model_kwargs={
+                "thinking": {"type": "enabled", "budget_tokens": 1024},
+            },
         )
         self.log.debug(f"Using LLM: {model_id}")
 
@@ -140,7 +142,7 @@ class LLM:
             [
                 (
                     "system",
-                    "Your name is Mai. You are an AI assistant for question-answering tasks. Use at maximum 4 sentences to answer the question.",
+                    "You are Mai, an AI assistant for question-answering tasks. Use at maximum five sentences to answer the question.",
                 ),
                 MessagesPlaceholder(variable_name="messages"),
             ]
@@ -156,9 +158,7 @@ class LLM:
         store: Annotated[FAISS, InjectedStore],
     ):
         """Retrieve information related to a query."""
-        print("----------------------------")
-        print("Retrieving from vector store")
-        print("----------------------------")
+        print("Retrieving from vector store ...")
         retrieved_docs = store.similarity_search(query, k=2)
         serialized = "\n\n".join(
             (f"Source: {doc.metadata}\n" f"Content: {doc.page_content}")
@@ -189,10 +189,10 @@ class LLM:
         # Format into prompt
         docs_content = "\n\n".join(doc.content for doc in tool_messages)
         system_message_content = (
-            "Your name is Mai. You are an AI assistant for question-answering tasks. "
+            "You are Mai, an AI assistant for question-answering tasks. "
             "Use the following pieces of retrieved context to answer "
             "the question. If you don't know the answer, say that you "
-            "don't know. Use three sentences maximum and keep the "
+            "don't know. Use five sentences maximum and keep the "
             "answer concise."
             "\n\n"
             f"{docs_content}"
